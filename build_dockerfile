@@ -1,0 +1,174 @@
+#!/bin/bash
+while (($# > 0)); do
+    key="$1"
+    case $key in
+        -V|--version)
+        imgver="$2"
+        shift
+        shift
+        ;;
+        -A|--arch)
+        darcher="$2"
+        shift
+        shift
+        ;;
+    esac
+done
+
+
+# Colors
+if [[ -z $NO_COLOR ]]; then
+  export BLACK=$'\033[0;30m'  # Black
+  export RED=$'\033[0;31m'    # Red
+  export GREEN=$'\033[0;32m'  # Green
+  export YELLOW=$'\033[0;33m' # Yellow
+  export BLUE=$'\033[0;34m'   # Blue
+  export PURPLE=$'\033[0;35m' # Purple
+  export CYAN=$'\033[0;36m'   # Cyan
+  export WHITE=$'\033[0;37m'  # White
+  export NC=$'\033[0m'
+  export BGreen=$'\033[1;32m'
+  export BCyan=$'\033[1;36m'
+  export BYellow=$'\033[1;33m'
+  export BPurple=$'\033[1;35m'
+  export BRed=$'\033[1;31m'
+  export BWhite=$'\033[1;37m'
+fi
+
+function ask() {
+    local prompt default reply
+
+    if [[ ${2-} == 'Y' ]]; then
+        prompt="${BGreen}Y${NC}/${BRed}n${NC}"
+        default='Y'
+    elif [[ ${2-} == 'N' ]]; then
+        prompt="${BGreen}y${NC}/${BRed}N${NC}"
+        default='N'
+    else
+        prompt="${BGreen}y${NC}/${BRed}n${NC}"
+    fi
+
+    # Ask the question (not using "read -p" as it uses stderr not stdout)
+    echo -ne "$1 [$prompt] "
+
+    if [[ ${DISABLE_PROMPTS:-z} == "z" ]]; then
+        export DISABLE_PROMPTS="no"
+    fi
+
+    if [[ $DISABLE_PROMPTS == "no" ]]; then
+        read -r reply <&0
+        # Detect if script is running non-interactively
+        # Which implies that the input is being piped into the script
+        if [[ $NON_INTERACTIVE ]]; then
+            if [[ -z $reply ]]; then
+                echo -n "$default"
+            fi
+            echo "$reply"
+        fi
+    else
+        echo "$default"
+        reply=$default
+    fi
+
+    # Default?
+    if [[ -z $reply ]]; then
+        reply=$default
+    fi
+
+    while :; do
+        # Check if the reply is valid
+        case "$reply" in
+            Y* | y*)
+                export answer=1
+                return 0 #return code for backwards compatibility
+                break
+                ;;
+            N* | n*)
+                export answer=0
+                return 1 #return code
+                break
+                ;;
+            *)
+                echo -ne "$1 [$prompt] "
+                read -r reply < /dev/tty
+                ;;
+        esac
+    done
+}
+
+if [[ -z ${imgver} ]]; then
+  imgver="$(date +%Y%m%d)"
+fi
+
+if [[ -z ${darcher} ]]; then
+  if [[ $(uname -m) == "aarch64" || $(uname -m) == "arm64" ]]; then
+    darcher="arm64"
+  elif [[ $(uname -m) == "x86_64" || $(uname -m) == "amd64" ]]; then
+    darcher="amd64"
+  else
+    echo "Rhino Linux only supports x86_64/amd64 + aarch64/arm64 as base architectures!"
+    exit 1
+  fi
+fi
+
+if [[ ${darcher} == "aarch64" || $darcher == "arm64" ]]; then
+  darcher="arm64"
+elif [[ ${darcher} == "x86_64" || $darcher == "amd64" ]]; then
+  darcher="amd64"
+else
+  echo "Rhino Linux only supports x86_64/amd64 + aarch64/arm64 as base architectures!"
+  exit 1
+fi
+
+if [[ ${darcher} == "arm64" ]]; then
+  base_darch="arm64v8/"
+elif [[ ${darcher} == "amd64" ]]; then
+  base_darch="amd64/"
+else
+  echo "Rhino Linux only supports x86_64/amd64 + aarch64/arm64 as base architectures!"
+  exit 1
+fi
+
+built_dock="$(pwd)/Dockerfile.RhinoLinux.${imgver}_${darcher}"
+
+if [[ -f ${built_dock} ]]; then 
+  rm -f ${built_dock}
+fi
+
+cat > ${built_dock} <<EOF
+FROM ${base_darch}ubuntu:devel
+LABEL org.opencontainers.image.description "Contains Rhino Linux ${imgver}"
+
+SHELL ["/bin/bash", "-l", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ="Africa/Libreville"
+RUN ln -snf /usr/share/zoneinfo/\$TZ /etc/localtime && echo \$TZ > /etc/timezone
+ARG package="pacstall"
+
+RUN if [[ \$(dpkg --print-architecture) == "amd64" ]]; then dpkg --add-architecture i386; fi && apt-get update && apt-get dist-upgrade -y && apt-get install wget curl git sudo nano ca-certificates util-linux lsb-release adduser dpkg-dev apt-utils -y --fix-missing --no-install-recommends && apt-get clean && apt-get autoclean && apt-get autoremove -y
+RUN VERSION_CODENAME="\$(lsb_release -cs)" && sudo sed -i "s/\$VERSION_CODENAME/.\/devel/g" /etc/apt/sources.list && sudo apt-get update
+RUN adduser --disabled-password --gecos '' rhino && adduser rhino sudo
+RUN sudo bash -c "\$(curl -fsSL https://pacstall.dev/q/install\?dnt || wget -q https://pacstall.dev/q/install\?dnt -O -)" && rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN chown -R rhino:rhino /var/log/pacstall && chown -R rhino:rhino /tmp/pacstall
+RUN chown -R rhino:rhino /var/log/pacstall && chown -R rhino:rhino /tmp/pacstall
+RUN runuser -l rhino -c 'HOME=/home/rhino SUDO_USER=rhino PACSTALL_DOWNLOADER=quiet-wget pacstall -PI nala-deb rhino-server-core'
+RUN echo "neofetch" >> /home/rhino/.bashrc
+# https://askubuntu.com/a/1026978
+RUN rm /etc/apt/apt.conf.d/docker-clean
+
+USER rhino
+WORKDIR /home/rhino
+
+# ENTRYPOINT ["/bin/bash"]
+CMD ["bash"]
+EOF
+
+ask "Start build now?" N
+if ((answer == 0)); then
+  echo "${BWhite}Not starting. Run the following command to build:${NC}"
+  echo "${GREEN}docker build -f ${built_dock} -t ${base_darch}rhinolinux:${imgver} .${NC}"
+else
+  docker build -f ${built_dock} -t ${base_darch}rhinolinux:${imgver} .
+  rm -f ${built_dock}
+fi
