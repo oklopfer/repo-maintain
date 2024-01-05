@@ -49,7 +49,7 @@ ${BYellow}Examples:${NC}
 
   ${BPurple}$0 -t -c -v 2023.4 -a arm64${NC}
     
-    Builds and boots arm64v8/rhinolinux:2023.4 from scratch.
+    Builds and boots ${BGreen}arm64v8/rhinolinux:2023.4${NC} from scratch.
     Note: the version tag may not correlate with the actual
     Rhino Linux version. This option is meant for easily 
     publishing images for specific milestones.
@@ -57,7 +57,7 @@ ${BYellow}Examples:${NC}
 
   ${BPurple}$0 --file -A x86_64${NC}
     
-    Creates a Dockerfile for amd64/rhinolinux:YYYYMMDD and
+    Creates a Dockerfile for ${BGreen}amd64/rhinolinux:YYYYMMDD${NC} and
     provides instructions on how to build and run the image.
 
 EOF
