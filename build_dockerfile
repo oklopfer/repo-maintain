@@ -239,12 +239,13 @@ CMD ["bash"]
 EOF
 
 if ((test_mode == 1)); then
-  echo "${BYellow}Built${NC} ${BPurple}${built_dock}${BYellow}. Building${NC} ${BPurple}${base_darch}rhinolinux:${imgver}${BYellow}...${NC}"
+  echo "${BYellow}Dockerfile built at${NC} ${BPurple}${built_dock}${BYellow}. Building${NC} ${BPurple}${base_darch}rhinolinux:${imgver}${BYellow}...${NC}"
   docker build -f ${built_dock} -t ${base_darch}rhinolinux:${imgver} . ${no_cache} && \
-  echo "${BYellow}Built${NC} ${BPurple}${base_darch}rhinolinux:${imgver}${BYellow}. Starting...${NC}" && \
+  echo "${BYellow}Built image${NC} ${BPurple}${base_darch}rhinolinux:${imgver}${BYellow}. Starting...${NC}" && \
   docker run -it --net=host ${base_darch}rhinolinux:${imgver} bash
 else
-  ask "Start build now?" N
+  echo "${BYellow}Dockerfile built at${NC} ${BPurple}${built_dock}${BYellow}.${NC}"
+  ask "Start image build now?" N
   if ((answer == 0)); then
     echo "${BYellow}Not starting. Run the following command to build:${NC}"
     echo "${GREEN}docker build -f ${built_dock} -t ${base_darch}rhinolinux:${imgver} . --no-cache${NC}"
@@ -252,7 +253,8 @@ else
     echo "${GREEN}docker run -it --net=host ${base_darch}rhinolinux:${imgver} bash${NC}"
   else
     docker build -f ${built_dock} -t ${base_darch}rhinolinux:${imgver} . ${no_cache} && \
-    ask "Build complete. Do you want to start the image to test?" N
+    echo "${BYellow}Built image${NC} ${BPurple}${base_darch}rhinolinux:${imgver}${BYellow}.${NC}"
+    ask "Do you want to start the image to test?" N
     if ((answer == 0)); then
       echo "${BYellow}Not starting. Run the following command to test:${NC}"
       echo "${GREEN}docker run -it --net=host ${base_darch}rhinolinux:${imgver} bash${NC}"
