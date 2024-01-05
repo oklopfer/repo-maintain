@@ -135,6 +135,21 @@ function wipe_docker_bits() {
   local_docker_images=($(docker image ls | grep rhino | awk '{print $1":"$2}'))
   ldi_hashes=($(docker image ls | grep rhino | awk '{print $3}'))
   local_docker_files=($(ls | grep Dockerfile.RhinoLinux))
+  echo "${BYellow}Found${NC} ${BPurple}${#local_docker_files[@]}${NC} ${BYellow}files:${NC}"
+  if ! [[ -z ${local_docker_files} ]]; then
+    for i in ${local_docker_files[*]}; do
+      echo ${CYAN}${i}${NC}
+    done
+    ask "Remove files?" N
+    if ((answer == 1)); then
+      for i in ${local_docker_files[*]}; do
+        echo "${BRed}Removing:${NC} ${CYAN}${i}${NC}"
+        rm -f ${i}
+      done
+    fi
+  else
+    echo "${BGreen}No Dockerfiles to remove!${NC}"
+  fi
   echo "${BYellow}Found${NC} ${BPurple}${#local_docker_images[@]}${NC} ${BYellow}images:${NC}"
   if ! [[ -z ${local_docker_images} ]]; then
     for i in ${local_docker_images[*]}; do
@@ -149,21 +164,6 @@ function wipe_docker_bits() {
     fi
   else
     echo "${BGreen}No Docker images to remove!${NC}"
-  fi
-  echo "${BYellow}Found${NC} ${BPurple}${#local_docker_files[@]}${NC} ${BYellow}Dockerfiles:${NC}"
-  if ! [[ -z ${local_docker_files} ]]; then
-    for i in ${local_docker_files[*]}; do
-      echo ${CYAN}${i}${NC}
-    done
-    ask "Remove Dockerfiles?" N
-    if ((answer == 1)); then
-      for i in ${local_docker_files[*]}; do
-        echo "${BRed}Removing:${NC} ${CYAN}${i}${NC}"
-        rm -f ${i}
-      done
-    fi
-  else
-    echo "${BGreen}No Dockerfiles to remove!${NC}"
   fi
 }
 
