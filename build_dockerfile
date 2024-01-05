@@ -65,6 +65,7 @@ EOF
 
 test_mode=0
 no_cache=""
+file_trigger=0
 
 while (($# > 0)); do
   key="$1"
@@ -80,6 +81,10 @@ while (($# > 0)); do
       shift
       ;;
     -T | -t | --test)
+      if ((file_trigger == 1)); then
+        echo "${BRed}Nope.${NC} ${YELLOW}File is the opposite of Test.${NC}"
+        exit 1
+      fi
       DISABLE_PROMPTS="yes"
       test_mode=1
       shift
@@ -87,21 +92,20 @@ while (($# > 0)); do
     -C | -c | --clean)
       no_cache="--no-cache"
       shift
-      shift
       ;;
     -F | -f | --file)
-      if ((test_mode == 0)); then
-        DISABLE_PROMPTS="yes"
-      else
+      if ((test_mode == 1)); then
         echo "${BRed}Nope.${NC} ${YELLOW}File is the opposite of Test.${NC}"
         exit 1
       fi
-      shift
+      DISABLE_PROMPTS="yes"
+      file_trigger=1
       shift
       ;;
     -H | -h | --help)
       show_help
       exit 1
+      ;;
   esac
 done
 
@@ -176,7 +180,7 @@ if [[ -z ${darcher} ]]; then
   elif [[ $(uname -m) == "x86_64" || $(uname -m) == "amd64" ]]; then
     darcher="amd64"
   else
-    echo "Rhino Linux only supports x86_64/amd64 + aarch64/arm64 as base architectures!"
+    echo "${BYellow}Rhino Linux only supports ${BPurple}x86_64/amd64${BYellow} + ${BPurple}aarch64/arm64${BYellow} as base architectures!${NC}"
     exit 1
   fi
 fi
@@ -186,7 +190,7 @@ if [[ ${darcher} == "aarch64" || $darcher == "arm64" ]]; then
 elif [[ ${darcher} == "x86_64" || $darcher == "amd64" ]]; then
   darcher="amd64"
 else
-  echo "Rhino Linux only supports x86_64/amd64 + aarch64/arm64 as base architectures!"
+  echo "${BYellow}Rhino Linux only supports ${BPurple}x86_64/amd64${BYellow} + ${BPurple}aarch64/arm64${BYellow} as base architectures!${NC}"
   exit 1
 fi
 
@@ -195,7 +199,7 @@ if [[ ${darcher} == "arm64" ]]; then
 elif [[ ${darcher} == "amd64" ]]; then
   base_darch="amd64/"
 else
-  echo "Rhino Linux only supports x86_64/amd64 + aarch64/arm64 as base architectures!"
+  echo "${BYellow}Rhino Linux only supports ${BPurple}x86_64/amd64${BYellow} + ${BPurple}aarch64/arm64${BYellow} as base architectures!${NC}"
   exit 1
 fi
 
