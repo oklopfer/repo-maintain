@@ -6,11 +6,9 @@ on:
       vertag:
         description: 'Version Tag'
         required: false
-env:
-INPUT_VERTAG: ${{ github.event.inputs.vertag }}
 
 env:
-  # Use docker.io for Docker Hub if empty
+  INPUT_VERTAG: ${{ github.event.inputs.vertag }}
   REGISTRY: ghcr.io
   IMAGE_NAME: rhinolinux/os
 
