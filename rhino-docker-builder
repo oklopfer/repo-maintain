@@ -21,7 +21,7 @@ fi
 
 function show_help() {
   cat << EOF
-${BYellow}Usage:${NC} $0 ${PURPLE}[OPTIONS]${NC}
+${BYellow}Usage:${NC} $(basename "$0") ${PURPLE}[OPTIONS]${NC}
 
 ${BYellow}Options:${NC}
 
@@ -51,17 +51,21 @@ ${BYellow}Description:${NC}
 
 ${BYellow}Examples:${NC}
 
-  ${BPurple}$0 -t -c -v 2023.4 -a arm64${NC}
+  ${BPurple}$(basename "$0") -t -c -v 2023.4 -a arm64${NC}
     
     Builds and boots ${BGreen}arm64v8/rhino:2023.4${NC} from scratch.
-    Note: the version tag may not correlate with the actual Rhino Linux version. 
+    ${BYellow}Note:${NC} the version tag may not correlate with the actual Rhino Linux version.
     This option is meant for easily publishing images for specific milestones.
 
 
-  ${BPurple}$0 --file -A x86_64${NC}
+  ${BPurple}$(basename "$0") --file -A x86_64${NC}
     
     Creates the Dockerfile ${BGreen}Dockerfile.RhinoLinux.${dateiniso}_amd64${NC} for building 
     ${BGreen}arm64v8/rhino:${dateiniso}${NC}, with instructions on how to build and run the image.
+
+
+${BPurple}$(basename "$0")${NC} ${BCyan}0.1.0${NC}
+${BYellow}Written by:${NC} Oren Klopfer <oren@taumoda.com>
 
 EOF
 }
